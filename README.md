@@ -90,6 +90,7 @@ movie_recommendation_system/
 │   ├── tmdb_5000_movies.csv      # Movie metadata
 │   └── tmdb_5000_credits.csv     # Cast & crew data
 ├── recommmendor.ipynb            # Main notebook (EDA + training + recommend)
+├── app.py                        # Streamlit web app (Movieflix Ultimate)
 ├── movies.pkl                    # Saved model (generated after first run)
 ├── requirements.txt              # Python dependencies
 └── README.md
@@ -149,6 +150,27 @@ jupyter notebook recommmendor.ipynb
 ```
 
 Run all cells in the notebook. The first run will process the dataset and save the model to `movies.pkl`.
+
+---
+
+## 🎬 Web App (Movieflix Ultimate)
+
+Run the Streamlit web app for a Netflix-style movie recommendation UI with mood-based discovery:
+
+```bash
+# 1. Generate movies.pkl first (run all cells in recommmendor.ipynb)
+# 2. Install dependencies
+pip install -r requirements.txt
+
+# 3. Run the app
+streamlit run app.py
+```
+
+**Features:**
+- Mood quiz (Laugh, Pumped, Scared, Emotional) → genre-based recommendations
+- Search any movie → get 5 similar recommendations with posters
+- Browse by genre (Action, Comedy, Drama, Romance)
+- TMDB poster integration (requires internet)
 
 ---
 
