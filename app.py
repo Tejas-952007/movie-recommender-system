@@ -147,8 +147,17 @@ def load_data():
 try:
     movies, similarity = load_data()
 except Exception:
-    st.error(f"An error occurred while loading data:\n\n{traceback.format_exc()}")
-    st.stop()
+    # If loading fails, try to rebuild the model once (e.g. if pickle version mismatch or corrupt file)
+    try:
+        st.warning("⚠️ Model load failed. Attempting to rebuild model...")
+        import build_model
+        build_model.main()
+        st.cache_resource.clear()
+        movies, similarity = load_data()
+        st.success("✅ Model rebuilt and loaded successfully!")
+    except Exception:
+        st.error(f"An error occurred while loading data:\n\n{traceback.format_exc()}")
+        st.stop()
 
 if movies is None:
     st.error("⚠️ movies.pkl not found.")
