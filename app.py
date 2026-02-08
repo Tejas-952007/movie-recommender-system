@@ -1,12 +1,23 @@
 """
 Movieflix Ultimate - Streamlit Web App
-Run the notebook first to generate movies.pkl, then: streamlit run app.py
+Auto-generates movies.pkl on first run (for deployment).
 """
 import streamlit as st
 import pickle
 import pandas as pd
 import requests
 import os
+
+SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
+MOVIES_PKL = os.path.join(SCRIPT_DIR, 'movies.pkl')
+
+# Auto-generate movies.pkl if missing (for Streamlit Cloud / deployment)
+if not os.path.exists(MOVIES_PKL):
+    try:
+        import build_model
+        build_model.main()
+    except Exception:
+        pass
 
 # --- 1. PAGE SETUP & CSS ---
 st.set_page_config(page_title="Movieflix Ultimate", page_icon="🎬", layout="wide")
@@ -100,8 +111,12 @@ st.markdown("""
 def load_data():
     """Load from movies.pkl (dict or DataFrame), or legacy movie_dict.pkl + similarity.pkl."""
     try:
-        if os.path.exists('movies.pkl'):
-            with open('movies.pkl', 'rb') as f:
+        movies_pkl = os.path.join(SCRIPT_DIR, 'movies.pkl')
+        movie_dict_pkl = os.path.join(SCRIPT_DIR, 'movie_dict.pkl')
+        similarity_pkl = os.path.join(SCRIPT_DIR, 'similarity.pkl')
+
+        if os.path.exists(movies_pkl):
+            with open(movies_pkl, 'rb') as f:
                 data = pickle.load(f)
 
             if isinstance(data, dict) and 'df' in data and 'vectors' in data:
@@ -118,10 +133,10 @@ def load_data():
                 vectors = cv.fit_transform(movies['tags'].fillna(''))
                 similarity = cosine_similarity(vectors)
                 return movies, similarity
-        elif os.path.exists('movie_dict.pkl') and os.path.exists('similarity.pkl'):
-            movies_dict = pickle.load(open('movie_dict.pkl', 'rb'))
+        elif os.path.exists(movie_dict_pkl) and os.path.exists(similarity_pkl):
+            movies_dict = pickle.load(open(movie_dict_pkl, 'rb'))
             movies = pd.DataFrame(movies_dict)
-            similarity = pickle.load(open('similarity.pkl', 'rb'))
+            similarity = pickle.load(open(similarity_pkl, 'rb'))
             return movies, similarity
         return None, None
     except Exception:
@@ -131,7 +146,8 @@ def load_data():
 movies, similarity = load_data()
 
 if movies is None:
-    st.error("⚠️ Error: Run the notebook first to generate movies.pkl, or ensure movie_dict.pkl + similarity.pkl exist.")
+    st.error("⚠️ movies.pkl not found.")
+    st.info("Run: `python build_model.py`  (or run all cells in recommmendor.ipynb)")
     st.stop()
 
 
