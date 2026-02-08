@@ -29,6 +29,7 @@ wheels/
 
 # Model files (large)
 *.pkl
+!movies.pkl
 
 # IDE
 .vscode/
