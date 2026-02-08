@@ -295,7 +295,7 @@ else:
             for i, col in enumerate([c1, c2, c3, c4, c5]):
                 with col:
                     if i < len(posters):
-                        st.image(posters[i], use_container_width=True)
+                        st.image(posters[i], width='stretch')
                         st.caption(names[i])
 
         genres_to_show = ["Action", "Comedy", "Drama", "Romance"]
@@ -307,7 +307,7 @@ else:
             for i, col in enumerate(cols):
                 with col:
                     if i < len(posters):
-                        st.image(posters[i], use_container_width=True)
+                        st.image(posters[i], width='stretch')
                         st.caption(names[i])
 
     elif st.session_state['page'] == 'search':
@@ -318,7 +318,7 @@ else:
             for i, col in enumerate(cols):
                 with col:
                     if i < len(posters):
-                        st.image(posters[i], use_container_width=True)
+                        st.image(posters[i], width='stretch')
                         st.markdown(f"**{names[i]}**")
 
         if st.button("⬅️ Back"):
