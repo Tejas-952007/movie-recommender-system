@@ -114,53 +114,26 @@ import gc
 
 @st.cache_resource
 def load_data():
-    """Load data and compute similarity matrix efficiently."""
+    """Load pre-computed data (movies_final.csv + similarity.pkl)."""
     try:
         movies_csv = os.path.join(SCRIPT_DIR, 'movies_final.csv')
-        movies_pkl = os.path.join(SCRIPT_DIR, 'movies.pkl')
+        similarity_pkl = os.path.join(SCRIPT_DIR, 'similarity.pkl')
         
-        movies = None
+        if not os.path.exists(movies_csv) or not os.path.exists(similarity_pkl):
+            st.error("Critical Error: Data files missing!")
+            st.stop()
+            
+        # Load Movies
+        movies = pd.read_csv(movies_csv)
         
-        # Priority 1: Load from CSV (most stable across Python versions)
-        if os.path.exists(movies_csv):
-            movies = pd.read_csv(movies_csv)
-        # Priority 2: Load from Pickle (if CSV missing)
-        elif os.path.exists(movies_pkl):
-            with open(movies_pkl, 'rb') as f:
-                data = pickle.load(f)
-            if isinstance(data, pd.DataFrame):
-                movies = data
-            elif isinstance(data, dict) and 'df' in data:
-                movies = data['df']
-
-        if movies is not None:
-            # OPTIMIZATION: Convert tags to string to ensure vectorizer works
-            movies['tags'] = movies['tags'].fillna('').astype(str)
+        # Load Similarity Matrix (Pre-computed float16)
+        with open(similarity_pkl, 'rb') as f:
+            similarity = pickle.load(f)
             
-            # Compute Similarity Matrix on the fly
-            from sklearn.feature_extraction.text import TfidfVectorizer
-            from sklearn.metrics.pairwise import cosine_similarity
-            
-            # Limit features to 5000 to save memory
-            cv = TfidfVectorizer(max_features=5000, stop_words='english')
-            vectors = cv.fit_transform(movies['tags'])
-            
-            # Compute cosine similarity
-            # Note: 5000x5000 float64 is ~200MB. float32 is ~100MB.
-            similarity = cosine_similarity(vectors).astype('float32')
-            
-            # Free memory
-            del vectors
-            del cv
-            gc.collect()
-            
-            return movies, similarity
-
-        return None, None
+        return movies, similarity
     except Exception:
-        # If anything fails, print usage stats to help debug
         import sys
-        st.error(f"Error loading data. Python version: {sys.version}")
+        st.error(f"Error loading pre-computed data. Python version: {sys.version}")
         st.error(f"Traceback: {traceback.format_exc()}")
         return None, None
 
