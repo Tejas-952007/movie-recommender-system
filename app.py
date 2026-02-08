@@ -107,43 +107,48 @@ st.markdown("""
 
 
 # --- 2. DATA LOADING ---
+import traceback
+
+# --- 2. DATA LOADING ---
 @st.cache_resource
 def load_data():
     """Load from movies.pkl (dict or DataFrame), or legacy movie_dict.pkl + similarity.pkl."""
-    try:
-        movies_pkl = os.path.join(SCRIPT_DIR, 'movies.pkl')
-        movie_dict_pkl = os.path.join(SCRIPT_DIR, 'movie_dict.pkl')
-        similarity_pkl = os.path.join(SCRIPT_DIR, 'similarity.pkl')
+    # Removed generic try-except to debug deployment issues
+    movies_pkl = os.path.join(SCRIPT_DIR, 'movies.pkl')
+    movie_dict_pkl = os.path.join(SCRIPT_DIR, 'movie_dict.pkl')
+    similarity_pkl = os.path.join(SCRIPT_DIR, 'similarity.pkl')
 
-        if os.path.exists(movies_pkl):
-            with open(movies_pkl, 'rb') as f:
-                data = pickle.load(f)
+    if os.path.exists(movies_pkl):
+        with open(movies_pkl, 'rb') as f:
+            data = pickle.load(f)
 
-            if isinstance(data, dict) and 'df' in data and 'vectors' in data:
-                movies = data['df'].copy()
-                vectors = data['vectors']
-                from sklearn.metrics.pairwise import cosine_similarity
-                similarity = cosine_similarity(vectors)
-                return movies, similarity
-            elif isinstance(data, pd.DataFrame):
-                movies = data.copy()
-                from sklearn.feature_extraction.text import TfidfVectorizer
-                from sklearn.metrics.pairwise import cosine_similarity
-                cv = TfidfVectorizer(max_features=5000, stop_words='english')
-                vectors = cv.fit_transform(movies['tags'].fillna(''))
-                similarity = cosine_similarity(vectors)
-                return movies, similarity
-        elif os.path.exists(movie_dict_pkl) and os.path.exists(similarity_pkl):
-            movies_dict = pickle.load(open(movie_dict_pkl, 'rb'))
-            movies = pd.DataFrame(movies_dict)
-            similarity = pickle.load(open(similarity_pkl, 'rb'))
+        if isinstance(data, dict) and 'df' in data and 'vectors' in data:
+            movies = data['df'].copy()
+            vectors = data['vectors']
+            from sklearn.metrics.pairwise import cosine_similarity
+            similarity = cosine_similarity(vectors)
             return movies, similarity
-        return None, None
-    except Exception:
-        return None, None
+        elif isinstance(data, pd.DataFrame):
+            movies = data.copy()
+            from sklearn.feature_extraction.text import TfidfVectorizer
+            from sklearn.metrics.pairwise import cosine_similarity
+            cv = TfidfVectorizer(max_features=5000, stop_words='english')
+            vectors = cv.fit_transform(movies['tags'].fillna(''))
+            similarity = cosine_similarity(vectors)
+            return movies, similarity
+    elif os.path.exists(movie_dict_pkl) and os.path.exists(similarity_pkl):
+        movies_dict = pickle.load(open(movie_dict_pkl, 'rb'))
+        movies = pd.DataFrame(movies_dict)
+        similarity = pickle.load(open(similarity_pkl, 'rb'))
+        return movies, similarity
+    return None, None
 
 
-movies, similarity = load_data()
+try:
+    movies, similarity = load_data()
+except Exception:
+    st.error(f"An error occurred while loading data:\n\n{traceback.format_exc()}")
+    st.stop()
 
 if movies is None:
     st.error("⚠️ movies.pkl not found.")
